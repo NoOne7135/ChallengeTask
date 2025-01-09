@@ -1,6 +1,6 @@
 # ChallengeTask
 
-## Create a Virtual Environment (Optional)
+## Create a Virtual Environment (Recommended)
 
 ## Run Backend App
 
@@ -12,6 +12,12 @@ cd backend
 ```
 ```bash
 uvicorn main:app --reload
+```
+If you do not create an environment, it may give an error.
+Paste the full path to uvicorn instead of uvicorn (the path will most likely be indicated in the error)  
+Example:
+```bash
+C:\Users\User\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\Scripts\uvicorn.exe main:app --reload
 ```
 
 ## Run Frontend
