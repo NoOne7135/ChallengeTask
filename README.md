@@ -36,7 +36,7 @@ python odds_calculation.py
 ```
 
 ## Run API Test
-
+(Without changing the odds, the test will fail with an RTP value of 0.6 – 0.7; when changing the odds, the test will be passed with an RTP value of 0.93 - 0.97, requires time)  
 ```bash
 cd backend
 ```
@@ -44,7 +44,7 @@ cd backend
 pytest api_test.py -s
 ```
 
-## Odds Calculation Result:
+## Odds Calculation Result
 With the condition that Pair is only Pair, 2 Pairs are not taken into account  
 Other: 0.0  
 Pair: 1.43  

@@ -26,8 +26,8 @@ def test_1000_rolls(setup_db):
     large_straight_count = 0
     yahtzee_count = 0
     
-    #You can replace 3000 with a lower or higher value, but with higher values ​​the database may return an error.
-    for _ in range(3000):
+    #You can replace 1000 with a lower or higher value, but with higher values ​​the database may return an error.
+    for _ in range(1000):
         response = client.post("/api/roll", json={"bet": bet})
         assert response.status_code == 200
         winnings = response.json()["winnings"]

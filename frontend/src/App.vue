@@ -3,7 +3,7 @@
     <div class="dice-section">
       <h2>Dice</h2>
       <div class="dice">
-        <div v-for="(die, index) in dice" :key="index" class="die">
+        <div v-for="(die, index) in dice" :key="index" class="die animate-die">
           {{ die === null ? '?' : die }}
         </div>
       </div>
@@ -37,82 +37,72 @@
 </template>
 
 <script>
+import { ref, reactive, onMounted } from "vue";
 import axios from "axios";
 
 export default {
-  data() {
-  return {
-      dice: [null, null, null, null, null],
-      balance: 100, // Start with 100, will be replaced by backend value
-      bet: 0, // Current bet
-      highlighted: "", // Store the highlighted prize
-      multipliers: {}, // Store the multipliers from backend
-      isRolling: false, // Track if the dice rolling is in progress
-    };
-  },
-  async created() {
-    try {
-      // Fetch the initial balance
-      const balanceResponse = await axios.get("http://127.0.0.1:8000/api/balance");
-      this.balance = balanceResponse.data;
+  setup() {
+    const dice = ref([null, null, null, null, null]);
+    const balance = ref(100);
+    const bet = ref(0);
+    const highlighted = ref("");
+    const multipliers = reactive({});
+    const isRolling = ref(false);
 
-      // Fetch the multipliers
-      const multipliersResponse = await axios.get("http://127.0.0.1:8000/api/multipliers");
-      this.multipliers = multipliersResponse.data;
-    } catch (error) {
-      console.error("Error loading initial data:", error);
-    }
-  },
-  methods: {
-    async rollDice() {
-      if (this.bet > this.balance || this.bet <= 0) {
+    const fetchInitialData = async () => {
+      try {
+        const balanceResponse = await axios.get("http://127.0.0.1:8000/api/balance");
+        balance.value = balanceResponse.data;
+
+        const multipliersResponse = await axios.get("http://127.0.0.1:8000/api/multipliers");
+        Object.assign(multipliers, multipliersResponse.data);
+      } catch (error) {
+        console.error("Error loading initial data:", error);
+      }
+    };
+
+    const rollDice = async () => {
+      if (bet.value > balance.value || bet.value <= 0) {
         alert("Invalid bet!");
         return;
       }
 
-      this.isRolling = true; // Show the loader during the process
+      isRolling.value = true;
 
       try {
-        // Deduct the bet from balance
-        this.balance -= this.bet;
+        balance.value -= bet.value;
 
-        // Add a small delay before making the request (e.g., 1 second)
-        await new Promise(resolve => setTimeout(resolve, 1000)); // 1000ms = 1 second
+        // Визуальная задержка для анимации броска
+        dice.value = [null, null, null, null, null]; // Сбрасываем кубики для "анимации"
+        await new Promise(resolve => setTimeout(resolve, 1000)); // 1 секунда ожидания
 
-        // Make request to API to get dice result
-        const response = await axios.post("http://127.0.0.1:8000/api/roll", { bet: this.bet });
-        
-        // Update dice and balance
-        this.dice = response.data.dice;
-        this.balance = response.data.balance;
+        const response = await axios.post("http://127.0.0.1:8000/api/roll", { bet: bet.value });
+        dice.value = response.data.dice; // Обновляем кубики
+        balance.value = response.data.balance;
 
-        // Handle winnings and highlight the correct prize
-        if (response.data.winnings > 0) {
-          if (response.data.winnings_type === "Yahtzee") {
-            this.highlighted = "Yahtzee";
-          } else if (response.data.winnings_type === "Full House") {
-            this.highlighted = "Full House";
-          } else if (response.data.winnings_type === "Large Straight") {
-            this.highlighted = "Large Straight";
-          } else if (response.data.winnings_type === "Pair") {
-            this.highlighted = "Pair";
-          } else {
-            this.highlighted = "Other";
-          }
-        } else {
-          this.highlighted = "Other";
-        }
-        
+        highlighted.value = response.data.winnings > 0
+          ? response.data.winnings_type
+          : "Other";
       } catch (error) {
         console.error("Error rolling dice:", error);
         alert("An error occurred while rolling the dice.");
-        
-        // Refund the bet if there's an error
-        this.balance += this.bet;
+        balance.value += bet.value;
       } finally {
-        this.isRolling = false; // Hide the loader when done
+        isRolling.value = false;
       }
-    },
+    };
+
+    onMounted(fetchInitialData);
+
+    return {
+      dice,
+      balance,
+      bet,
+      highlighted,
+      multipliers,
+      isRolling,
+      rollDice,
+    };
   },
 };
 </script>
@@ -145,6 +135,20 @@ export default {
   font-weight: bold;
 }
 
+/* Анимация кубиков */
+.animate-die {
+  animation: bounce 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 ul {
   list-style-type: none;
   padding: 0;
@@ -167,7 +171,6 @@ li.highlight {
   margin-top: 20px;
 }
 
-/* Spinner animation */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
